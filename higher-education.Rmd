@@ -1,0 +1,157 @@
+---
+title: "Final Project"
+author: "Nicole Harris"
+date: "4/20/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+student <- read.csv("student-mat.csv")
+student <- student %>% mutate(higher.= ifelse(higher == "yes", 1, 0), schoolGP = ifelse(school == "GP", 1, 0), male = ifelse(sex == "M", 1, 0), rural = ifelse(address == "R", 1, 0), famsizeGT3 = ifelse(famsize == "GT3", 1, 0), parentsT = ifelse(Pstatus == "T",1 ,0), schoolsupY = ifelse(schoolsup == "yes", 1, 0), famsupY = ifelse(famsup == "yes", 1, 0), paidY = ifelse(paid == "yes", 1, 0), activitiesY = ifelse(activities == "yes", 1, 0), nurseryY = ifelse(nursery == "yes", 1, 0), internetY = ifelse(internet == "yes", 1, 0), romanticY = ifelse(romantic == "yes", 1, 0))
+student1 <- student %>% select(higher.:romanticY, age, Medu,Fedu, traveltime, studytime, failures, famrel:G3)
+```
+
+```{r}
+cor(student1)
+student1 <- student1 %>% select(higher.:absences, G3)
+```
+
+G1,G2, and G3 are all highly correlated (.8-.9) so I will take out G2 and G1 and just use G3. Dalc and Walc also have a high correlation coefficient but we will still consider them both for now because it is not as high (.64).
+
+```{r}
+null <- glm(higher.~1, data = student1, family = binomial)
+full <- glm(higher.~., data = student1, family = binomial)
+step(null, scope=list(lower=null, upper=full), direction = "forward")
+```
+
+```{r}
+reg <- glm(formula = higher. ~ failures + paidY + age + studytime + romanticY + male + Medu + schoolGP + activitiesY, family = binomial, data = student1)
+summary(reg)
+
+1-pchisq(158.296-93.797, 1)
+```
+
+```{r}
+reg2 <- glm(formula = higher. ~ paidY + age + studytime + romanticY + male + Medu + schoolGP + activitiesY, family = binomial, data = student1)
+summary(reg2)
+
+1-pchisq(95.316-93.797, 1)
+```
+
+```{r}
+reg3 <- glm(formula = higher. ~ paidY + age + studytime + romanticY + male + Medu + schoolGP, family = binomial, data = student1)
+summary(reg3)
+
+1-pchisq(97.413-96.198, 1)
+
+lrm(higher. ~ paidY + age + studytime + romanticY + male + Medu + schoolGP, student1)
+```
+
+```{r}
+student1 %>% ggplot(aes(schoolGP, higher.))+
+  geom_jitter(width = .01)+
+  geom_smooth(method = "glm", method.args = list(family = "binomial"))
+
+student1 %>% ggplot(aes(Medu, higher.))+
+  geom_jitter(width = .01)+
+  geom_smooth(method = "glm", method.args = list(family = "binomial"))
+
+student1 %>% ggplot(aes(male, higher.))+
+  geom_jitter(width = .01)+
+  geom_smooth(method = "glm", method.args = list(family = "binomial"))
+
+student1 %>% ggplot(aes(romanticY, higher.))+
+  geom_jitter(width = .01)+
+  geom_smooth(method = "glm", method.args = list(family = "binomial"))
+
+student1 %>% ggplot(aes(studytime, higher.))+
+  geom_jitter(width = .01)+
+  geom_smooth(method = "glm", method.args = list(family = "binomial"))
+
+student1 %>% ggplot(aes(age, higher.))+
+  geom_jitter(width = .01)+
+  geom_smooth(method = "glm", method.args = list(family = "binomial"))
+
+student1 %>% ggplot(aes(paidY, higher.))+
+  geom_jitter(width = .01)+
+  geom_smooth(method = "glm", method.args = list(family = "binomial"))
+```
+
+
+```{r}
+reg4 <- glm(formula = higher. ~ paidY + age + studytime + romanticY + male + Medu, family = binomial, data = student1)
+summary(reg4)
+
+1-pchisq(102.11-97.413, 1)
+
+lrm(higher. ~ paidY + age + studytime + romanticY + male + Medu, student1)
+
+res <- residuals(reg8, type = "pearson")
+student7 <- cbind(student1, res, reg8$fitted.values)
+student7 <- student7 %>% rename(fit = "reg8$fitted.values")
+
+student7 %>% ggplot(aes(res))+
+  geom_histogram(color = "black", fill = "blue", bins = 10)
+student7 %>% ggplot(aes(fit, res))+
+  geom_point(color = "blue")
+
+reg5 <- glm(higher. ~ age, family = binomial, data = student1)
+student2 <- cbind(student1, reg5$fitted.values)
+student2 <- student2 %>% rename(fit = "reg5$fitted.values")
+summary(reg5)
+
+hoslem.test(student7$higher., student7$fit, g=10)
+hoslem.test(student2$higher., student2$fit, g=10)
+```
+
+```{r}
+exp(2.4719-qt(.95, 388)*0.212)
+exp(2.4719+qt(.95, 388)*0.212)
+```
+
+```{r}
+exp(-0.5048-qt(.95, 388)*0.212)
+exp(-0.5048+qt(.95, 388)*0.212)
+```
+
+```{r}
+exp(0.9773-qt(.95, 388)*0.212)
+exp(0.9773+qt(.95, 388)*0.212)
+```
+
+```{r}
+exp(-1.5379-qt(.95, 388)*0.212)
+exp(-1.5379+qt(.95, 388)*0.212)
+```
+
+```{r}
+exp(-1.4148-qt(.95, 388)*0.212)
+exp(-1.4148+qt(.95, 388)*0.212)
+```
+
+```{r}
+exp(-0.6195-qt(.95, 388)*0.212)
+exp(-0.6195+qt(.95, 388)*0.212)
+```
+
+```{r}
+exp(-1.8382-qt(.95, 388)*.9294)
+exp(-1.8382+qt(.95, 388)*.9294)
+```
+
+Since none of the confidence intervals contain 1, we can conclude that each variable does affect the likelihood of considering higher education.
+
+```{r}
+newdata = data.frame(paidY = 0, age = 18, studytime = 0, romanticY = 1, male = 1, Medu = 0)
+confint(reg4, newdata, interval = "predict")
+
+ 
+exp(9.58+2.47*0-0.5*18+0.98*0-1.54*1-1.41*1+0.62*0)
+```
+
+
